@@ -9,6 +9,7 @@ import io.javalin.apibuilder.ApiBuilder.*
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.JobSchedulingService
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -20,7 +21,7 @@ data class BillingCronRequest(val one: String, val two: Int)
 class AntaeusRest (
     private val invoiceService: InvoiceService,
     private val customerService: CustomerService,
-    private val billingTaskQueue: SendChannel<Int>
+    private val jobSchedulingService: JobSchedulingService
 ) : Runnable {
 
     override fun run() {
@@ -56,11 +57,9 @@ class AntaeusRest (
                path("webhooks") {
                    post("billing-cron") { ctx ->
                        val r = ctx.body<BillingCronRequest>()
-                       runBlocking {
-                           billingTaskQueue.send(r.two)
-                       }
-                       println("MOOOO")
-                       ctx.json(r.toString())
+                       val job = jobSchedulingService
+                           .scheduleMonthlyBilling(9, 2019)
+                       ctx.json(job)
                    }
                }
 

@@ -7,16 +7,12 @@
 
 package io.pleo.antaeus.data
 
-import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
-import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import io.pleo.antaeus.models.*
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 
 class AntaeusDal(private val db: Database) {
     fun fetchInvoice(id: Int): Invoice? {
@@ -38,7 +34,11 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
+    fun createInvoice(
+        amount: Money,
+        customer: Customer,
+        status: InvoiceStatus = InvoiceStatus.PENDING
+    ): Invoice? {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
             InvoiceTable
@@ -51,6 +51,26 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchInvoice(id!!)
+    }
+
+    fun fetchPendingInvoicesByCustomerId(customerId: Int): List<Invoice> {
+        val exp1 = InvoiceTable.customerId.eq(customerId)
+        val exp2 = InvoiceTable.status.eq(InvoiceStatus.PENDING.toString())
+        val query = exp1 and exp2
+        return transaction(db) {
+            InvoiceTable
+                .select { query }
+                .map { it.toInvoice() }
+        }
+    }
+
+    fun updateInvoiceStatus(invoiceId: Int, status: InvoiceStatus): Invoice {
+        val id = transaction(db) {
+            InvoiceTable.update({ InvoiceTable.id.eq(invoiceId) }) {
+                it[InvoiceTable.status] = status.toString()
+            }
+        }
+        return fetchInvoice(id)!!
     }
 
     fun fetchCustomer(id: Int): Customer? {
@@ -79,5 +99,49 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchCustomer(id!!)
+    }
+
+    fun getOrCreateCronJob(
+        name: String,
+        type: String,
+        status: CronJobStatus = CronJobStatus.CREATED
+    ): CronJob {
+        val existingJob = fetchCronJobByName(name)
+        if (existingJob != null) {
+            return existingJob
+        }
+
+        transaction(db) {
+            CronJobTable
+                .insert {
+                    it[this.name] = name
+                    it[this.type] = type
+                    it[this.status] = status.toString()
+                    it[this.started] = DateTime(DateTimeZone.UTC) // now
+                }
+        }
+
+        return fetchCronJobByName(name)!!
+    }
+
+    fun fetchCronJobByName(name: String): CronJob? {
+        return transaction(db) {
+            CronJobTable
+                .select { CronJobTable.name.eq(name) }
+                .firstOrNull()
+                ?.toCronJob()
+        }
+    }
+
+    fun updateCronJobStatus(job: CronJob, status: CronJobStatus): CronJob {
+        val name = job.name
+        transaction(db) {
+            CronJobTable
+                .update({ CronJobTable.name.eq(name) }) {
+                    it[CronJobTable.status] = status.toString()
+                }
+        }
+
+        return fetchCronJobByName(name)!!
     }
 }

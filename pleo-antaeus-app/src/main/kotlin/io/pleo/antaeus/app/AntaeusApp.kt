@@ -11,12 +11,12 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.workers.BillingWorker
+import io.pleo.antaeus.core.services.JobSchedulingService
 import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.data.CronJobTable
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
-import kotlinx.coroutines.channels.Channel
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -27,10 +27,12 @@ import setupInitialData
 import java.sql.Connection
 
 fun main() {
-    // The tables to create in the database.
-    val tables = arrayOf(InvoiceTable, CustomerTable)
-
-    // Connect to the database and create the needed tables. Drop any existing data.
+    // Initialize DB
+    val tables = arrayOf(
+        InvoiceTable,
+        CustomerTable,
+        CronJobTable
+    )
     val db = Database
         .connect("jdbc:sqlite:/tmp/data.db", "org.sqlite.JDBC")
         .also {
@@ -56,27 +58,18 @@ fun main() {
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
-
-    // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(
         paymentProvider = paymentProvider,
         customerService = customerService,
         invoiceService = invoiceService
     )
-
-    val queue = Channel<Int>(100)
-    BillingWorker.spawn(queue)
-
-
-//    val jobSchedulingService = JobSchedulingService()
-
-    billingService.chargeInvoices()
+    val jobSchedulingService = JobSchedulingService(billingService, dal)
 
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
         customerService = customerService,
-        billingTaskQueue = queue
+        jobSchedulingService = jobSchedulingService
     ).run()
 }
 

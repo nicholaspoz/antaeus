@@ -19,3 +19,11 @@ object CustomerTable : Table() {
     val id = integer("id").autoIncrement().primaryKey()
     val currency = varchar("currency", 3)
 }
+
+object CronJobTable : Table() {
+    val id = integer("id").autoIncrement().primaryKey()
+    val name = varchar("name", 128).index()
+    val type = varchar("job_type", 20)
+    val status = varchar("status", 20)
+    val started = datetime("started")
+}
