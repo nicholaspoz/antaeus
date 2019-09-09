@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  pleo-antaeus:
+    build: .
+    volumes:
+    - pleo-antaeus-build-cache:/root/.gradle
+    ports:
+      - 7000:7000
+    stdin_open: true
+    tty: true
+
+volumes:
+  pleo-antaeus-build-cache:
