@@ -7,21 +7,17 @@ package io.pleo.antaeus.rest
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.*
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.services.JobSchedulingService
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-data class BillingCronRequest(val one: String, val two: Int)
-
 class AntaeusRest (
     private val invoiceService: InvoiceService,
     private val customerService: CustomerService,
-    private val jobSchedulingService: JobSchedulingService
+    private val billingService: BillingService
 ) : Runnable {
 
     override fun run() {
@@ -56,9 +52,11 @@ class AntaeusRest (
 
                path("webhooks") {
                    post("billing-cron") { ctx ->
-                       val r = ctx.body<BillingCronRequest>()
-                       val job = jobSchedulingService
-                           .scheduleMonthlyBilling(9, 2019)
+                       // Deserialization
+                       val (rawCron, rawPeriod) = ctx.body<BillingCronRequest>()
+                       val (cron, period) = deserializeCronRequest(rawCron, rawPeriod)
+
+                       val job = billingService.scheduleBillingJob(cron, period)
                        ctx.json(job)
                    }
                }

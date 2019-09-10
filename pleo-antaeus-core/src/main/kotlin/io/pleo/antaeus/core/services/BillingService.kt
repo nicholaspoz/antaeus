@@ -1,21 +1,32 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.external.PaymentProvider
-import io.pleo.antaeus.models.InvoiceStatus
+import io.pleo.antaeus.core.factories.BillingJobFactory
+import io.pleo.antaeus.core.jobs.JobRunner
+import io.pleo.antaeus.core.jobs.JobType
+import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.models.CronJob
+import io.pleo.antaeus.models.CronJobStatus
+import org.joda.time.DateTime
 
 class BillingService(
-    private val paymentProvider: PaymentProvider,
-    private val customerService: CustomerService,
-    private val invoiceService: InvoiceService
+    private val billingJobFactory: BillingJobFactory,
+    private val cronJobService: CronJobService
 ) {
-    fun chargeInvoices() {
-        customerService.fetchAll().forEach { customer ->
-            invoiceService.fetchPendingForCustomer(customer.id).forEach { invoice ->
-                val charged = paymentProvider.charge(invoice)
-                val status = if(charged) InvoiceStatus.PAID else InvoiceStatus.PENDING
-                invoiceService.updateStatus(invoice, status)
-                println("Updated invoice $invoice with status $status")
-            }
+
+    @Synchronized
+    fun scheduleBillingJob(jobType: JobType, period: DateTime): CronJob {
+        val jobRunner = billingJobFactory.getJobRunner(jobType, period)
+        val name = jobRunner.getName()
+        val job = cronJobService.getOrCreateCronJob(name)
+        if (job.status == CronJobStatus.CREATED) {
+            startJob(jobRunner)
         }
+        return job
     }
+
+    private fun startJob(jobRunner: JobRunner) {
+        val t = Thread(jobRunner)
+        t.start()
+    }
+
 }

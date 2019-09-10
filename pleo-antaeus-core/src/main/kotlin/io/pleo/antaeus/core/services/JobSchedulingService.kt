@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
-
+/*
+import io.pleo.antaeus.core.jobs.JobRunner
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.CronJob
 import io.pleo.antaeus.models.CronJobStatus
@@ -7,7 +8,7 @@ import io.pleo.antaeus.models.CronJobStatus
 
 class MonthlyBillingRunner(
     private val job: CronJob,
-    private val billingService: BillingService,
+    private val jobRunner: JobRunner,
     private val schedulingService: JobSchedulingService
     ) : Runnable {
 
@@ -31,7 +32,7 @@ class MonthlyBillingRunner(
         schedulingService.updateJobStatus(job, CronJobStatus.RUNNING)
 
         try {
-            billingService.chargeInvoices()
+            jobRunner.process()
         } finally {
             schedulingService.updateJobStatus(job, CronJobStatus.FINISHED)
         }
@@ -44,12 +45,10 @@ class JobSchedulingService(
     private val dal: AntaeusDal
 ) {
 
-    @Synchronized fun scheduleMonthlyBilling(month: Int, year: Int): CronJob {
+    @Synchronized
+    fun scheduleMonthlyBilling(month: Int, year: Int): CronJob {
         val jobName = MonthlyBillingRunner.constructJobName(month, year)
-        val job = dal.getOrCreateCronJob(
-            name = jobName,
-            type = "monthly-billing"
-        )
+        val job = dal.getOrCreateCronJob(name = jobName)
         if (job.status == CronJobStatus.CREATED) {
             // Kick off the new job
             MonthlyBillingRunner.spawn(job, billingService, this)
@@ -66,3 +65,4 @@ class JobSchedulingService(
 
     }
 }
+*/

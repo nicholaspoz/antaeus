@@ -7,12 +7,14 @@
 
 package io.pleo.antaeus.app
 
-import getPaymentProvider
+import io.pleo.antaeus.core.factories.BillingJobFactory
 import io.pleo.antaeus.core.services.BillingService
+import io.pleo.antaeus.core.services.ChargeService
+import io.pleo.antaeus.core.services.CronJobService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.services.JobSchedulingService
 import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.data.ChargeTable
 import io.pleo.antaeus.data.CronJobTable
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
@@ -31,6 +33,7 @@ fun main() {
     val tables = arrayOf(
         InvoiceTable,
         CustomerTable,
+        ChargeTable,
         CronJobTable
     )
     val db = Database
@@ -52,24 +55,30 @@ fun main() {
     // Insert example data in the database.
     setupInitialData(dal = dal)
 
-    // Get third parties
-    val paymentProvider = getPaymentProvider()
-
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
-    val billingService = BillingService(
-        paymentProvider = paymentProvider,
+    val chargeService = ChargeService(dal = dal)
+    val cronJobService = CronJobService(dal = dal)
+
+    // Create Factory
+    val billingJobFactory = BillingJobFactory(
         customerService = customerService,
-        invoiceService = invoiceService
+        invoiceService = invoiceService,
+        chargeService = chargeService,
+        cronJobService = cronJobService
     )
-    val jobSchedulingService = JobSchedulingService(billingService, dal)
+
+    // Create BillingService, which schedules billing jobs
+    val billingService = BillingService(
+        billingJobFactory = billingJobFactory,
+        cronJobService = cronJobService
+    )
 
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
         customerService = customerService,
-        jobSchedulingService = jobSchedulingService
+        billingService = billingService
     ).run()
 }
-

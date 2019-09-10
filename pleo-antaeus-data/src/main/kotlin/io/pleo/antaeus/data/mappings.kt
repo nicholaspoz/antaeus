@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.ResultRow
 
 fun ResultRow.toInvoice(): Invoice = Invoice(
     id = this[InvoiceTable.id],
+    service = this[InvoiceTable.service],
     amount = Money(
         value = this[InvoiceTable.value],
         currency = Currency.valueOf(this[InvoiceTable.currency])
@@ -26,7 +27,16 @@ fun ResultRow.toCustomer(): Customer = Customer(
 fun ResultRow.toCronJob(): CronJob = CronJob(
     id = this[CronJobTable.id],
     name = this[CronJobTable.name],
-    type = this[CronJobTable.type],
     status = CronJobStatus.valueOf(this[CronJobTable.status]),
     started = this[CronJobTable.started]
+)
+
+fun ResultRow.toCharge(): Charge = Charge(
+    id = this[ChargeTable.id],
+    amount = Money(
+        value = this[ChargeTable.value],
+        currency = Currency.valueOf(this[ChargeTable.currency])
+    ),
+    status = ChargeStatus.valueOf(this[ChargeTable.status]),
+    invoiceId = this[ChargeTable.invoiceId]
 )

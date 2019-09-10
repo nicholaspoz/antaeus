@@ -7,10 +7,25 @@
 
 package io.pleo.antaeus.data
 
-import io.pleo.antaeus.models.*
-import org.jetbrains.exposed.sql.*
+
+import io.pleo.antaeus.models.Charge
+import io.pleo.antaeus.models.ChargeStatus
+import io.pleo.antaeus.models.CronJob
+import io.pleo.antaeus.models.CronJobStatus
+import io.pleo.antaeus.models.Currency
+import io.pleo.antaeus.models.Customer
+import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceStatus
+import io.pleo.antaeus.models.Money
+import org.jetbrains.exposed.sql.Database
+
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
@@ -35,6 +50,7 @@ class AntaeusDal(private val db: Database) {
     }
 
     fun createInvoice(
+        service: String,
         amount: Money,
         customer: Customer,
         status: InvoiceStatus = InvoiceStatus.PENDING
@@ -43,6 +59,7 @@ class AntaeusDal(private val db: Database) {
             // Insert the invoice and returns its new id.
             InvoiceTable
                 .insert {
+                    it[this.service] = service
                     it[this.value] = amount.value
                     it[this.currency] = amount.currency.toString()
                     it[this.status] = status.toString()
@@ -103,7 +120,6 @@ class AntaeusDal(private val db: Database) {
 
     fun getOrCreateCronJob(
         name: String,
-        type: String,
         status: CronJobStatus = CronJobStatus.CREATED
     ): CronJob {
         val existingJob = fetchCronJobByName(name)
@@ -115,7 +131,6 @@ class AntaeusDal(private val db: Database) {
             CronJobTable
                 .insert {
                     it[this.name] = name
-                    it[this.type] = type
                     it[this.status] = status.toString()
                     it[this.started] = DateTime(DateTimeZone.UTC) // now
                 }
@@ -133,8 +148,7 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun updateCronJobStatus(job: CronJob, status: CronJobStatus): CronJob {
-        val name = job.name
+    fun updateCronJobStatusByName(name: String, status: CronJobStatus): CronJob {
         transaction(db) {
             CronJobTable
                 .update({ CronJobTable.name.eq(name) }) {
@@ -143,5 +157,28 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchCronJobByName(name)!!
+    }
+
+    fun createCharge(invoice: Invoice, amount: Money, status: ChargeStatus): Charge {
+        val id = transaction(db) {
+            // Insert the customer and return its new id.
+            ChargeTable.insert {
+                it[this.invoiceId] = invoice.id
+                it[this.currency] = amount.currency.toString()
+                it[this.value] = amount.value
+                it[this.status] = status.toString()
+            } get ChargeTable.id
+        }
+
+        return fetchCharge(id!!)!!
+    }
+
+    fun fetchCharge(id: Int): Charge? {
+        return transaction(db) {
+            ChargeTable
+                .select { ChargeTable.id.eq(id) }
+                .firstOrNull()
+                ?.toCharge()
+        }
     }
 }
