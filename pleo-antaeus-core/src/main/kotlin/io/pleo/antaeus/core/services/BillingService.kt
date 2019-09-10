@@ -18,22 +18,23 @@ class BillingService(
         val jobRunner = billingJobFactory.getJobRunner(jobType, period)
         val job = cronJobService.getOrCreateCronJob(jobRunner.getName())
 
-        var t: Thread? = null
+        var thread: Thread? = null
         if (job.status == CronJobStatus.CREATED) {
-            t = runJob(jobRunner)
+            thread = runJob(jobRunner)
         }
-        return Pair(job, t)
+        return Pair(job, thread)
     }
 
     private fun runJob(jobRunner: JobRunner): Thread {
         return thread {
-            cronJobService.updateStatusByName(jobRunner.getName(), CronJobStatus.RUNNING)
-            try {
-                jobRunner.process()
-            } finally {
-                cronJobService.updateStatusByName(jobRunner.getName(), CronJobStatus.FINISHED)
+            with(jobRunner){
+                cronJobService.updateStatusByName(getName(), CronJobStatus.RUNNING)
+                try {
+                    run()
+                } finally {
+                    cronJobService.updateStatusByName(getName(), CronJobStatus.FINISHED)
+                }
             }
         }
     }
-
 }

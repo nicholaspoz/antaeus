@@ -7,7 +7,9 @@
 
 package io.pleo.antaeus.app
 
+import io.pleo.antaeus.core.external.RandomPaymentProvider
 import io.pleo.antaeus.core.factories.BillingJobFactory
+import io.pleo.antaeus.core.factories.PaymentProviderFactory
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.ChargeService
 import io.pleo.antaeus.core.services.CronJobService
@@ -54,21 +56,29 @@ fun main() {
     // Insert example data in the database.
     setupInitialData(dal = dal)
 
+    // Setup External Dependencies
+    val randomPaymentProvider = RandomPaymentProvider()
+    val paymentProviderFactory = PaymentProviderFactory(
+        randomPaymentProvider = randomPaymentProvider
+    )
+
     // Create core services
+    val cronJobService = CronJobService(dal = dal)
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
-    val chargeService = ChargeService(dal = dal)
-    val cronJobService = CronJobService(dal = dal)
+    val chargeService = ChargeService(
+        dal = dal,
+        paymentProviderFactory = paymentProviderFactory // TODO is this the right home?
+    )
 
-    // Create Factory
+    // Create Factories
     val billingJobFactory = BillingJobFactory(
         customerService = customerService,
         invoiceService = invoiceService,
-        chargeService = chargeService,
-        cronJobService = cronJobService
+        chargeService = chargeService
     )
 
-    // Create BillingService, which schedules billing jobs
+    // Create the JobFactory and BillingService
     val billingService = BillingService(
         billingJobFactory = billingJobFactory,
         cronJobService = cronJobService
