@@ -21,6 +21,7 @@ class MonthlyBillingJobRunner(
     private val chargeService: ChargeService,
     cronJobService: CronJobService
 ) : JobRunner(cronJobService) {
+
     override fun getName(): String {
         val year = period.year.toString()
         val month = period.monthOfYear.toString().padStart(2,'0')

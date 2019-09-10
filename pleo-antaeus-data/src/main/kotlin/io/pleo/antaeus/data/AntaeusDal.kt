@@ -7,7 +7,6 @@
 
 package io.pleo.antaeus.data
 
-
 import io.pleo.antaeus.models.Charge
 import io.pleo.antaeus.models.ChargeStatus
 import io.pleo.antaeus.models.CronJob

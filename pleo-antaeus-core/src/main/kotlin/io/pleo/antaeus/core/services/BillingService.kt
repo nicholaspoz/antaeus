@@ -3,7 +3,6 @@ package io.pleo.antaeus.core.services
 import io.pleo.antaeus.core.factories.BillingJobFactory
 import io.pleo.antaeus.core.jobs.JobRunner
 import io.pleo.antaeus.core.jobs.JobType
-import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.CronJob
 import io.pleo.antaeus.models.CronJobStatus
 import org.joda.time.DateTime
