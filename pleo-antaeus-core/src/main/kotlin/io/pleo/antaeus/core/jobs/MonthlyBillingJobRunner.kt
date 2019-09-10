@@ -5,12 +5,10 @@ import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.models.Charge
 import io.pleo.antaeus.models.ChargeStatus
-import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.Money
 import org.joda.time.DateTime
-import java.math.BigDecimal
 
 class MonthlyBillingJobRunner(
     private val period: DateTime,
@@ -36,8 +34,7 @@ class MonthlyBillingJobRunner(
     }
 
     private fun createInvoice(customer: Customer): Invoice {
-        // TODO get the amount from somewhere
-        val amount = Money(BigDecimal.valueOf(100.0), customer.currency)
+        val amount = Money(customer.currency.subscriptionPrice, customer.currency)
 
         return invoiceService.create(
             service = getName(),
