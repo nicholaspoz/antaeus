@@ -10,6 +10,7 @@ abstract class JobRunner(
     abstract fun process()
 
     override fun run() {
+        // TODO delete this function and convert JobRunner to interface
         cronJobService.updateStatusByName(getName(), CronJobStatus.RUNNING)
         try {
             process()

@@ -6,6 +6,7 @@ import io.pleo.antaeus.core.jobs.JobType
 import io.pleo.antaeus.models.CronJob
 import io.pleo.antaeus.models.CronJobStatus
 import org.joda.time.DateTime
+import kotlin.concurrent.thread
 
 class BillingService(
     private val billingJobFactory: BillingJobFactory,
@@ -13,19 +14,26 @@ class BillingService(
 ) {
 
     @Synchronized
-    fun scheduleBillingJob(jobType: JobType, period: DateTime): CronJob {
+    fun startJob(jobType: JobType, period: DateTime): Pair<CronJob, Thread?> {
         val jobRunner = billingJobFactory.getJobRunner(jobType, period)
-        val name = jobRunner.getName()
-        val job = cronJobService.getOrCreateCronJob(name)
+        val job = cronJobService.getOrCreateCronJob(jobRunner.getName())
+
+        var t: Thread? = null
         if (job.status == CronJobStatus.CREATED) {
-            startJob(jobRunner)
+            t = runJob(jobRunner)
         }
-        return job
+        return Pair(job, t)
     }
 
-    private fun startJob(jobRunner: JobRunner) {
-        val t = Thread(jobRunner)
-        t.start()
+    private fun runJob(jobRunner: JobRunner): Thread {
+        return thread {
+            cronJobService.updateStatusByName(jobRunner.getName(), CronJobStatus.RUNNING)
+            try {
+                jobRunner.process()
+            } finally {
+                cronJobService.updateStatusByName(jobRunner.getName(), CronJobStatus.FINISHED)
+            }
+        }
     }
 
 }

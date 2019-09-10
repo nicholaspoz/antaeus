@@ -55,8 +55,7 @@ class AntaeusRest (
                        // Deserialization
                        val (rawCron, rawPeriod) = ctx.body<BillingCronRequest>()
                        val (cron, period) = deserializeCronRequest(rawCron, rawPeriod)
-
-                       val job = billingService.scheduleBillingJob(cron, period)
+                       val (job, _) = billingService.startJob(cron, period)
                        ctx.json(job)
                    }
                }
