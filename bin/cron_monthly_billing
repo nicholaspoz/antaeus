@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "### RUNNING MONTHLY BILLING CRON ###"
+
+JOB_TYPE="MONTHLY_BILLING"
+PERIOD=$(date "+%Y-%m-%d")
+
+# Construct JSON payload
+DATA=$( jq -n -c \
+            --arg jt "$JOB_TYPE" \
+            --arg pd "$PERIOD" \
+            '{jobType: $jt, period: $pd}' )
+
+echo "---> Calling webhook with $DATA"
+curl -sS \
+  -d $DATA \
+  http://localhost:7000/rest/webhooks/billing-cron
+
+echo -e "\n---> Finished\n"

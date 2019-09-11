@@ -1,0 +1,1 @@
+* * * * * /antaeus/bin/cron_monthly_billing >> /var/log/cron.log 2>&1
