@@ -7,9 +7,11 @@ package io.pleo.antaeus.rest
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.apibuilder.ApiBuilder.post
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.rest.models.BillingCronRequest
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -47,6 +49,13 @@ class AntaeusRest (
                // URL: /rest/health
                get("health") {
                    it.json("ok")
+               }
+
+               path("webhooks") {
+                   post("billing-cron") { ctx ->
+                       val (rawJobType, rawPeriod) = ctx.body<BillingCronRequest>()
+                       ctx.json("$rawJobType $rawPeriod")
+                   }
                }
 
                // V1
