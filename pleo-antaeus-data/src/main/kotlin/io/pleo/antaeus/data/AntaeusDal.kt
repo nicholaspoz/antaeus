@@ -7,6 +7,8 @@
 
 package io.pleo.antaeus.data
 
+import io.pleo.antaeus.models.CronJob
+import io.pleo.antaeus.models.CronJobStatus
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
@@ -17,6 +19,9 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 
 class AntaeusDal(private val db: Database) {
     fun fetchInvoice(id: Int): Invoice? {
@@ -85,5 +90,46 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchCustomer(id!!)
+    }
+
+    fun getOrCreateCronJobByName(
+        name: String,
+        status: CronJobStatus = CronJobStatus.CREATED
+    ): CronJob? {
+        val existingJob = fetchCronJobByName(name)
+        if (existingJob != null) {
+            return existingJob
+        }
+
+        transaction(db) {
+            CronJobTable
+                .insert {
+                    it[this.name] = name
+                    it[this.status] = status.toString()
+                    it[this.started] = DateTime(DateTimeZone.UTC) // now
+                }
+        }
+
+        return fetchCronJobByName(name)
+    }
+
+    fun fetchCronJobByName(name: String): CronJob? {
+        return transaction(db) {
+            CronJobTable
+                .select { CronJobTable.name.eq(name) }
+                .firstOrNull()
+                ?.toCronJob()
+        }
+    }
+
+    fun updateCronJobStatusByName(name: String, status: CronJobStatus): CronJob? {
+        transaction(db) {
+            CronJobTable
+                .update({ CronJobTable.name.eq(name) }) {
+                    it[CronJobTable.status] = status.toString()
+                }
+        }
+
+        return fetchCronJobByName(name)
     }
 }
