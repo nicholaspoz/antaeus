@@ -13,6 +13,7 @@ import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.rest.models.BillingCronRequest
+import io.pleo.antaeus.rest.models.deserialize
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -55,8 +56,8 @@ class AntaeusRest (
 
                path("webhooks") {
                    post("billing-cron") { ctx ->
-                       val (rawJobType, rawPeriod) = ctx.body<BillingCronRequest>()
-                       val job = billingService.runBillingJob()
+                       val (jobType, period) = ctx.body<BillingCronRequest>().deserialize()
+                       val job = billingService.runBillingJob(jobType, period)
                        ctx.json(job)
                    }
                }
