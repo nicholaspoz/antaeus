@@ -1,4 +1,3 @@
-
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Currency
@@ -19,6 +18,7 @@ internal fun setupInitialData(dal: AntaeusDal) {
     customers.forEach { customer ->
         (1..10).forEach {
             dal.createInvoice(
+                item = "IMPORT",
                 amount = Money(
                     value = BigDecimal(Random.nextDouble(10.0, 500.0)),
                     currency = customer.currency

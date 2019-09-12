@@ -38,11 +38,17 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
+    fun createInvoice(
+        item: String,
+        amount: Money,
+        customer: Customer,
+        status: InvoiceStatus = InvoiceStatus.PENDING
+    ): Invoice? {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
             InvoiceTable
                 .insert {
+                    it[this.item] = item
                     it[this.value] = amount.value
                     it[this.currency] = amount.currency.toString()
                     it[this.status] = status.toString()
