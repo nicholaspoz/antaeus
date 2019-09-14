@@ -1,5 +1,6 @@
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.models.ChargeStatus
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
@@ -33,8 +34,8 @@ internal fun setupInitialData(dal: AntaeusDal) {
 // This is the mocked instance of the payment provider
 internal fun getPaymentProvider(): PaymentProvider {
     return object : PaymentProvider {
-        override fun charge(invoice: Invoice): Boolean {
-                return Random.nextBoolean()
+        override fun charge(invoice: Invoice): ChargeStatus {
+            return if (Random.nextBoolean()) ChargeStatus.PAID else ChargeStatus.FAILED
         }
     }
 }

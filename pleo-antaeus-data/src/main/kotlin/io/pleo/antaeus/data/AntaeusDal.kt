@@ -7,6 +7,8 @@
 
 package io.pleo.antaeus.data
 
+import io.pleo.antaeus.models.Charge
+import io.pleo.antaeus.models.ChargeStatus
 import io.pleo.antaeus.models.CronJob
 import io.pleo.antaeus.models.CronJobStatus
 import io.pleo.antaeus.models.Currency
@@ -48,7 +50,7 @@ class AntaeusDal(private val db: Database) {
         amount: Money,
         customer: Customer,
         status: InvoiceStatus = InvoiceStatus.PENDING
-    ): Invoice? {
+    ): Invoice {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
             InvoiceTable
@@ -61,7 +63,18 @@ class AntaeusDal(private val db: Database) {
                 } get InvoiceTable.id
         }
 
-        return fetchInvoice(id!!)
+        return fetchInvoice(id!!)!!
+    }
+
+    fun updateInvoiceStatus(invoice: Invoice, status: InvoiceStatus): Invoice {
+        transaction(db) {
+            InvoiceTable
+                .update({ InvoiceTable.id.eq(invoice.id) }) {
+                    it[InvoiceTable.status] = status.toString()
+                }
+        }
+
+        return fetchInvoice(invoice.id)!!
     }
 
     fun fetchCustomer(id: Int): Customer? {
@@ -81,7 +94,7 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun createCustomer(currency: Currency): Customer? {
+    fun createCustomer(currency: Currency): Customer {
         val id = transaction(db) {
             // Insert the customer and return its new id.
             CustomerTable.insert {
@@ -89,7 +102,29 @@ class AntaeusDal(private val db: Database) {
             } get CustomerTable.id
         }
 
-        return fetchCustomer(id!!)
+        return fetchCustomer(id!!)!!
+    }
+
+    fun createChargeFromInvoice(invoice: Invoice, status: ChargeStatus): Charge {
+        val id = transaction(db) {
+            ChargeTable.insert {
+                it[this.invoiceId] = invoice.id
+                it[this.currency] = invoice.amount.currency.toString()
+                it[this.value] = invoice.amount.value
+                it[this.status] = status.toString()
+            } get ChargeTable.id
+        }
+
+        return fetchCharge(id!!)!!
+    }
+
+    fun fetchCharge(id: Int): Charge? {
+        return transaction(db) {
+            ChargeTable
+                .select { ChargeTable.id.eq(id) }
+                .firstOrNull()
+                ?.toCharge()
+        }
     }
 
     fun getOrCreateCronJobByName(
