@@ -13,8 +13,14 @@ class JobRunnerFactory(
 ) {
 
     @Throws(InvalidJobTypeException::class)
-    fun getJobRunner(jobType: JobType, period: DateTime): JobRunner = when(jobType) {
+    fun getJobRunner(jobType: JobType, period: DateTime): JobRunner = when (jobType) {
         JobType.MONTHLY_BILLING -> MonthlyBillingJobRunner(
+            customerService = customerService,
+            invoiceService = invoiceService,
+            chargeService = chargeService,
+            period = period
+        )
+        JobType.WEEKLY_SETTLEMENT -> WeeklySettlementJobRunner(
             customerService = customerService,
             invoiceService = invoiceService,
             chargeService = chargeService,
