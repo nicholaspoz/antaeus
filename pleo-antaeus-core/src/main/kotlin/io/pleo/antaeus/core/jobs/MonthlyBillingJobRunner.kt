@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.jobs
 
+import io.pleo.antaeus.core.getSubscriptionAmount
 import io.pleo.antaeus.core.services.ChargeService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -37,7 +38,7 @@ class MonthlyBillingJobRunner(
     }
 
     private fun createInvoice(customer: Customer): Invoice {
-        val amount = Money(customer.currency.subscriptionPrice, customer.currency)
+        val amount = getSubscriptionAmount(customer.currency)
         return invoiceService.create(
             item = name,
             customer = customer,
