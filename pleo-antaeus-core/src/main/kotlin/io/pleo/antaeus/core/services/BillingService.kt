@@ -1,27 +1,39 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.jobs.JobRunner
+import io.pleo.antaeus.core.jobs.JobRunnerFactory
+import io.pleo.antaeus.core.jobs.JobType
 import io.pleo.antaeus.models.CronJob
 import io.pleo.antaeus.models.CronJobStatus
+import org.joda.time.DateTime
 import kotlin.concurrent.thread
 
 class BillingService(
-    private val cronJobService: CronJobService
+    private val cronJobService: CronJobService,
+    private val jobRunnerFactory: JobRunnerFactory
 ) {
     @Synchronized
-    fun runBillingJob(): CronJob {
-        val name = "CRON_JOB"
-        val job = cronJobService.getOrCreateByName(name)
-        if (job.status == CronJobStatus.CREATED) runAsync(job)
-        return job
+    fun runBillingJob(jobType: JobType, period: DateTime): Pair<CronJob, Thread?> {
+        val jobRunner = jobRunnerFactory.getJobRunner(jobType, period)
+        val job = cronJobService.getOrCreateByName(jobRunner.name)
+
+        var thread: Thread? = null
+        if (job.status == CronJobStatus.CREATED) {
+            thread = runAsync(jobRunner)
+        }
+        return Pair(job, thread)
     }
 
-    private fun runAsync(job: CronJob) {
-        cronJobService.updateStatusByName(job.name, CronJobStatus.RUNNING)
-        thread {
+    private fun runAsync(jobRunner: JobRunner): Thread {
+        cronJobService.updateStatusByName(jobRunner.name, CronJobStatus.RUNNING)
+        return thread {
             try {
-                Thread.sleep(5000L)
+                jobRunner.run()
             } finally {
-                cronJobService.updateStatusByName(job.name, CronJobStatus.FINISHED)
+                cronJobService.updateStatusByName(
+                    jobRunner.name,
+                    CronJobStatus.FINISHED
+                )
             }
         }
     }
