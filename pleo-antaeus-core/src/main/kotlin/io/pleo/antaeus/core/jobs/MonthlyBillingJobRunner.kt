@@ -11,6 +11,11 @@ import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import org.joda.time.DateTime
 
+/**
+ * The MonthlyBillingJobRunner is responsible for billing for customers' monthly
+ * subscriptions. This is done by creating and charging invoices on the first of the
+ * month.
+ */
 class MonthlyBillingJobRunner(
     private val customerService: CustomerService,
     private val invoiceService: InvoiceService,

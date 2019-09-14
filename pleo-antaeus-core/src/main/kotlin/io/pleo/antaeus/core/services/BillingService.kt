@@ -9,6 +9,10 @@ import io.pleo.antaeus.models.CronJobStatus
 import org.joda.time.DateTime
 import kotlin.concurrent.thread
 
+/**
+ * The BillingService class is responsible for scheduling Billing jobs.
+ * It is part of the JobRunner framework for running jobs in the background.
+ */
 class BillingService(
     private val cronJobService: CronJobService,
     private val jobRunnerFactory: JobRunnerFactory
