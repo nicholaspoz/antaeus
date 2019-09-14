@@ -9,14 +9,13 @@ import io.pleo.antaeus.models.ChargeStatus
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
 import org.joda.time.DateTime
 
 class MonthlyBillingJobRunner(
     private val customerService: CustomerService,
     private val invoiceService: InvoiceService,
     private val chargeService: ChargeService,
-    private val period: DateTime
+    override val period: DateTime
 ) : JobRunner {
     override val name: String
         get() {
@@ -58,6 +57,6 @@ class MonthlyBillingJobRunner(
     }
 
     private fun notifyCustomer(customer: Customer, charge: Charge) {
-        customerService.notifyOfChargeFailure(charge)
+        customerService.notifyOfChargeFailure(customer, charge)
     }
 }

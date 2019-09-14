@@ -26,7 +26,7 @@ class MonthlyBillingJobRunnerTest {
     // Constants
     private val name = "MONTHLY_BILLING_2019_09"
     private val period = DateTime(
-        2019, 9, 13, 20, 30, DateTimeZone.UTC
+        2019, 9, 1, 0, 0, DateTimeZone.UTC
     )
     private val currencyDkk = Currency.DKK
     private val amount = getSubscriptionAmount(currencyDkk)
@@ -102,8 +102,8 @@ class MonthlyBillingJobRunnerTest {
     @Test
     fun `will notify customer of charge failure`() {
         every { charge.status } returns ChargeStatus.FAILED
-        every { customerService.notifyOfChargeFailure(charge) } just Runs
+        every { customerService.notifyOfChargeFailure(customer, charge) } just Runs
         jobRunner.run()
-        verify(exactly = 3) { customerService.notifyOfChargeFailure(charge) }
+        verify(exactly = 3) { customerService.notifyOfChargeFailure(customer, charge) }
     }
 }

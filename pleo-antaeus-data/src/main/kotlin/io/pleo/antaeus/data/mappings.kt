@@ -24,7 +24,8 @@ fun ResultRow.toInvoice(): Invoice = Invoice(
         currency = Currency.valueOf(this[InvoiceTable.currency])
     ),
     status = InvoiceStatus.valueOf(this[InvoiceTable.status]),
-    customerId = this[InvoiceTable.customerId]
+    customerId = this[InvoiceTable.customerId],
+    added = this[InvoiceTable.added]
 )
 
 fun ResultRow.toCustomer(): Customer = Customer(
@@ -39,7 +40,8 @@ fun ResultRow.toCharge(): Charge = Charge(
         currency = Currency.valueOf(this[ChargeTable.currency])
     ),
     status = ChargeStatus.valueOf(this[ChargeTable.status]),
-    invoiceId = this[ChargeTable.invoiceId]
+    invoiceId = this[ChargeTable.invoiceId],
+    added = this[ChargeTable.added]
 )
 
 fun ResultRow.toCronJob(): CronJob = CronJob(

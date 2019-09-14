@@ -17,6 +17,7 @@ import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -45,6 +46,17 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
+    fun fetchPendingInvoicesAfter(cutoff: DateTime): List<Invoice> {
+        return transaction(db) {
+            InvoiceTable
+                .select {
+                    InvoiceTable.status.eq(InvoiceStatus.PENDING.toString()) and
+                            InvoiceTable.added.greaterEq(cutoff)
+                }
+                .map { it.toInvoice() }
+        }
+    }
+
     fun createInvoice(
         item: String,
         amount: Money,
@@ -60,6 +72,7 @@ class AntaeusDal(private val db: Database) {
                     it[this.currency] = amount.currency.toString()
                     it[this.status] = status.toString()
                     it[this.customerId] = customer.id
+                    it[this.added] = DateTime(DateTimeZone.UTC) // now
                 } get InvoiceTable.id
         }
 
@@ -112,6 +125,7 @@ class AntaeusDal(private val db: Database) {
                 it[this.currency] = invoice.amount.currency.toString()
                 it[this.value] = invoice.amount.value
                 it[this.status] = status.toString()
+                it[this.added] = DateTime(DateTimeZone.UTC) // now
             } get ChargeTable.id
         }
 

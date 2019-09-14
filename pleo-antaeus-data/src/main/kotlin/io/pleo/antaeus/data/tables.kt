@@ -14,6 +14,7 @@ object InvoiceTable : Table() {
     val value = decimal("value", 1000, 2)
     val customerId = reference("customer_id", CustomerTable.id)
     val status = text("status")
+    val added = datetime("added")
 }
 
 object ChargeTable : Table() {
@@ -22,6 +23,7 @@ object ChargeTable : Table() {
     val currency = varchar("currency", 3)
     val value = decimal("value", 1000, 2)
     val status = text("status")
+    val added = datetime("added")
 }
 
 object CustomerTable : Table() {

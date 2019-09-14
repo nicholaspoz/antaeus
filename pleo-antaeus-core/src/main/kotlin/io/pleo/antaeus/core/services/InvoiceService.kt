@@ -10,10 +10,15 @@ import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
+import org.joda.time.DateTime
 
 class InvoiceService(private val dal: AntaeusDal) {
     fun fetchAll(): List<Invoice> {
         return dal.fetchInvoices()
+    }
+
+    fun fetchPendingAfter(cutoff: DateTime): List<Invoice> {
+        return dal.fetchPendingInvoicesAfter(cutoff)
     }
 
     fun fetch(id: Int): Invoice {
