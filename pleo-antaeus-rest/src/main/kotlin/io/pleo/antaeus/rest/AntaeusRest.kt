@@ -9,10 +9,12 @@ import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.apibuilder.ApiBuilder.post
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.exceptions.InvalidJobTypeException
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.rest.models.BillingCronRequest
+import io.pleo.antaeus.rest.models.ErrorResponse
 import io.pleo.antaeus.rest.models.deserialize
 import mu.KotlinLogging
 
@@ -56,9 +58,14 @@ class AntaeusRest (
 
                path("webhooks") {
                    post("billing-cron") { ctx ->
-                       val (jobType, period) = ctx.body<BillingCronRequest>().deserialize()
-                       val job = billingService.runBillingJob(jobType, period)
-                       ctx.json(job)
+                       try {
+                           val (jobType, period) = ctx.body<BillingCronRequest>().deserialize()
+                           val (job, _) = billingService.runBillingJob(jobType, period)
+                           ctx.json(job)
+                       } catch(e: InvalidJobTypeException) {
+                           ctx.status(400)
+                           ctx.json(ErrorResponse(e.message ?: "Invalid JobType provided"))
+                       }
                    }
                }
 
