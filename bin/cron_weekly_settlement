@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "### RUNNING MONTHLY BILLING CRON ###"
+echo "### RUNNING WEEKLY SETTLEMENT CRON ###"
 
-JOB_TYPE="MONTHLY_BILLING"
+JOB_TYPE="WEEKLY_SETTLEMENT"
 PERIOD=$(date "+%Y-%m-%d")
 
 # Construct JSON payload

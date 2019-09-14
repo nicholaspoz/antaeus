@@ -11,6 +11,11 @@ import io.pleo.antaeus.models.InvoiceStatus
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
+/**
+ * The WeeklySettlmentJobRunner is responsible for ensuring payment on invoices that have
+ * not been settled. It should run once a week. If an invoice can not be settled by the
+ * end of the month, the Invoice will be marked as FAILED.
+ */
 class WeeklySettlementJobRunner(
     private val customerService: CustomerService,
     private val invoiceService: InvoiceService,

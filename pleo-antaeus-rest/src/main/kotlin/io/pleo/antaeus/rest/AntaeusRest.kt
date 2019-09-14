@@ -16,6 +16,7 @@ import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.rest.models.BillingCronRequest
 import io.pleo.antaeus.rest.models.ErrorResponse
 import io.pleo.antaeus.rest.models.deserialize
+import io.pleo.antaeus.rest.models.serialize
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -56,21 +57,21 @@ class AntaeusRest (
                    it.json("ok")
                }
 
-               path("webhooks") {
-                   post("billing-cron") { ctx ->
-                       try {
-                           val (jobType, period) = ctx.body<BillingCronRequest>().deserialize()
-                           val (job, _) = billingService.runBillingJob(jobType, period)
-                           ctx.json(job)
-                       } catch(e: InvalidJobTypeException) {
-                           ctx.status(400)
-                           ctx.json(ErrorResponse(e.message ?: "Invalid JobType provided"))
-                       }
-                   }
-               }
-
                // V1
                path("v1") {
+                   path("webhooks") {
+                       post("crons") { ctx ->
+                           try {
+                               val (jobType, period) = ctx.body<BillingCronRequest>().deserialize()
+                               val (job, _) = billingService.runBillingJob(jobType, period)
+                               ctx.json(job.serialize())
+                           } catch(e: InvalidJobTypeException) {
+                               ctx.status(400)
+                               ctx.json(ErrorResponse(e.message ?: "Invalid JobType provided"))
+                           }
+                       }
+                   }
+
                    path("invoices") {
                        // URL: /rest/v1/invoices
                        get {

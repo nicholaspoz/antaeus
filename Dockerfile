@@ -12,6 +12,7 @@ COPY . /antaeus
 COPY ./subscription-cron /etc/cron.d/subscription-cron
 RUN chmod 0644 /etc/cron.d/subscription-cron
 RUN chmod +x /antaeus/bin/cron_monthly_billing
+RUN chmod +x /antaeus/bin/cron_weekly_settlement
 RUN crontab /etc/cron.d/subscription-cron
 RUN touch /var/log/cron.log
 

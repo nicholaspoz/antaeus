@@ -1,1 +1,2 @@
-* * * * * /antaeus/bin/cron_monthly_billing >> /var/log/cron.log 2>&1
+0 0 1 * * /antaeus/bin/cron_monthly_billing >> /var/log/cron.log 2>&1
+0 4 7,14,21,28 * * /antaeus/bin/cron_weekly_settlement >> /var/log/cron.log 2>&1
