@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.InvalidJobTypeException
 import io.pleo.antaeus.core.jobs.JobRunner
 import io.pleo.antaeus.core.jobs.JobRunnerFactory
 import io.pleo.antaeus.core.jobs.JobType
@@ -12,7 +13,9 @@ class BillingService(
     private val cronJobService: CronJobService,
     private val jobRunnerFactory: JobRunnerFactory
 ) {
+
     @Synchronized
+    @Throws(InvalidJobTypeException::class)
     fun runBillingJob(jobType: JobType, period: DateTime): Pair<CronJob, Thread?> {
         val jobRunner = jobRunnerFactory.getJobRunner(jobType, period)
         val job = cronJobService.getOrCreateByName(jobRunner.name)
